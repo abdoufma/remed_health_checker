@@ -41,7 +41,7 @@ export class DiscordWebhookNotifier {
             },
             {
               name: "Details",
-              value: result.summary,
+              value: formatDetails(result),
             },
           ],
           timestamp: new Date(result.checkedAt).toISOString(),
@@ -67,4 +67,16 @@ export class DiscordWebhookNotifier {
       throw new Error(`Discord webhook failed with ${response.status}: ${responseBody}`);
     }
   }
+}
+
+function formatDetails(result) {
+  if (result.failureKind === "timeout" && Number.isInteger(result.timeoutMs)) {
+    return `Timed out after ${result.timeoutMs}ms`;
+  }
+
+  if (result.failureKind === "fetch" && Number.isInteger(result.attempts)) {
+    return `Fetch failed after ${result.attempts} attempts`;
+  }
+
+  return result.summary;
 }

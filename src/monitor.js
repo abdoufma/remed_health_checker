@@ -14,6 +14,7 @@ async function runCheck(check) {
     if (response.status !== check.expectedStatus) {
       return {
         state: "down",
+        failureKind: "response",
         checkedAt,
         latencyMs,
         url: check.url,
@@ -26,6 +27,7 @@ async function runCheck(check) {
       if (!bodyText.includes(check.expectSubstring)) {
         return {
           state: "down",
+          failureKind: "response",
           checkedAt,
           latencyMs,
           url: check.url,
@@ -43,12 +45,15 @@ async function runCheck(check) {
     };
   } catch (error) {
     const latencyMs = Math.round(performance.now() - startedAt);
+    const isTimeout = error?.name === "TimeoutError";
 
     return {
       state: "down",
+      failureKind: isTimeout ? "timeout" : "fetch",
       checkedAt,
       latencyMs,
       url: check.url,
+      timeoutMs: isTimeout ? check.timeoutMs : undefined,
       summary: error?.name === "TimeoutError"
         ? `Timed out after ${check.timeoutMs}ms`
         : error instanceof Error
@@ -96,7 +101,10 @@ export function startMonitor(appName, check, notifier) {
           await notifier.sendAlert({
             appName,
             nextState: result.state,
-            result,
+            result: {
+              ...result,
+              attempts: state.streak,
+            },
           });
           log("Initial down alert sent", {
             appName,
@@ -115,7 +123,12 @@ export function startMonitor(appName, check, notifier) {
         await notifier.sendAlert({
           appName,
           nextState: result.state,
-          result,
+          result: result.state === "down"
+            ? {
+                ...result,
+                attempts: state.streak,
+              }
+            : result,
         });
         log("Health state changed", {
           appName,
