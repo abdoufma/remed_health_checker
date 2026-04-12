@@ -50,6 +50,7 @@ export async function loadRuntimeConfig() {
       url: webhookUrl,
       dryRun: parseBoolean(process.env.DISCORD_WEBHOOK_DRY_RUN, false),
       username: process.env.DISCORD_WEBHOOK_USERNAME?.trim() || "Health Checker",
+      avatarUrl: process.env.DISCORD_WEBHOOK_AVATAR_URL?.trim() || "",
       roleMention: roleId ? `<@&${roleId}>` : "",
     },
     check: {

@@ -23,6 +23,7 @@ export class DiscordWebhookNotifier {
 
     const body = {
       username: this.config.username,
+      avatar_url: this.config.avatarUrl || undefined,
       content: nextState === "down" ? this.config.roleMention || undefined : undefined,
       allowed_mentions: this.config.roleMention ? { parse: ["roles"] } : { parse: [] },
       embeds: [

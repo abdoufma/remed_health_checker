@@ -18,6 +18,7 @@ Environment variables:
 - `DISCORD_ROLE_ID`: optional Discord role ID to mention on `DOWN` alerts.
 - `DISCORD_WEBHOOK_DRY_RUN`: optional; when `true`, log the webhook payload instead of sending it.
 - `DISCORD_WEBHOOK_USERNAME`: optional display name for webhook messages.
+- `DISCORD_WEBHOOK_AVATAR_URL`: optional avatar image URL for webhook messages.
 - `APP_NAME`: optional name shown in alert messages.
 - `HEALTHCHECK_URL`: local endpoint to poll. Defaults to `http://127.0.0.1:3000/health`.
 - `EXPECTED_STATUS`: expected HTTP status code. Defaults to `200`.
@@ -32,6 +33,7 @@ Environment variables:
 ```bash
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN \
 DISCORD_ROLE_ID=123456789012345678 \
+DISCORD_WEBHOOK_AVATAR_URL=https://cdn.discordapp.com/embed/avatars/2.png \
 APP_NAME="Remed Server" \
 npm start
 ```
@@ -41,6 +43,7 @@ For dry-run mode:
 ```bash
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN \
 DISCORD_ROLE_ID=123456789012345678 \
+DISCORD_WEBHOOK_AVATAR_URL=https://cdn.discordapp.com/embed/avatars/2.png \
 DISCORD_WEBHOOK_DRY_RUN=true \
 npm start
 ```
