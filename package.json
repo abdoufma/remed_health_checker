@@ -1,0 +1,19 @@
+{
+  "name": "remed_health_checker",
+  "version": "2.0.0",
+  "description": "Webhook-based uptime alerts for Discord",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "validate:config": "node src/validate-config.js",
+    "test:server": "bun test_server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  }
+}
