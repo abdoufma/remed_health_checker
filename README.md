@@ -53,12 +53,8 @@ The sample server in `test_server.ts` exposes `http://127.0.0.1:3000/health`.
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN npm run validate:config
 ```
 
-## Docker
+## PM2
 
 ```bash
-docker build -t remed-health-checker .
-docker run --rm \
-  -e DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN \
-  -e DISCORD_ROLE_ID=123456789012345678 \
-  remed-health-checker
+pm2 start ecosystem.config.js
 ```
