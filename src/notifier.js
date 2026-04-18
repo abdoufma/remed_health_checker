@@ -5,6 +5,10 @@ const STATE_META = {
     color: 0x2ecc71,
     title: "RECOVERED",
   },
+  degraded: {
+    color: 0xf1c40f,
+    title: "DEGRADED",
+  },
   down: {
     color: 0xe74c3c,
     title: "DOWN",
@@ -14,6 +18,7 @@ const STATE_META = {
 export class DiscordWebhookNotifier {
   constructor(config) {
     this.config = config;
+    this.recordHistory = async () => {};
   }
 
   async sendAlert({ appName, nextState, result }) {
@@ -77,6 +82,10 @@ function formatDetails(result) {
 
   if (result.failureKind === "fetch" && Number.isInteger(result.attempts)) {
     return `Fetch failed after ${result.attempts} attempts`;
+  }
+
+  if (result.state === "degraded" && Number.isInteger(result.degradedTimeoutMs)) {
+    return `Slow response: ${result.latencyMs}ms >= ${result.degradedTimeoutMs}ms`;
   }
 
   return result.summary;
