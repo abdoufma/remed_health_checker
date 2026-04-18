@@ -25,6 +25,16 @@ function parsePositiveInteger(name, rawValue, fallback) {
   return value;
 }
 
+function parseNonNegativeInteger(name, rawValue, fallback) {
+  const value = rawValue == null || rawValue === "" ? fallback : Number.parseInt(rawValue, 10);
+
+  if (!Number.isInteger(value) || value < 0) {
+    throw new Error(`${name} must be a non-negative integer`);
+  }
+
+  return value;
+}
+
 function parseExpectedStatus(rawValue) {
   const value = rawValue == null || rawValue === "" ? 200 : Number.parseInt(rawValue, 10);
 
@@ -56,11 +66,26 @@ export async function loadRuntimeConfig() {
     check: {
       url: process.env.HEALTHCHECK_URL?.trim() || "http://127.0.0.1:3000/health",
       intervalMs: parsePositiveInteger("CHECK_INTERVAL_MS", process.env.CHECK_INTERVAL_MS, 30_000),
-      timeoutMs: parsePositiveInteger("REQUEST_TIMEOUT_MS", process.env.REQUEST_TIMEOUT_MS, 5_000),
+      timeoutMs: parsePositiveInteger(
+        "REQUEST_TIMEOUT",
+        process.env.REQUEST_TIMEOUT ?? process.env.REQUEST_TIMEOUT_MS,
+        30_000,
+      ),
+      degradedTimeoutMs: parseNonNegativeInteger(
+        "DEGRADED_TIMEOUT",
+        process.env.DEGRADED_TIMEOUT ?? process.env.DEGRADED_TIMEOUT_MS,
+        10_000,
+      ),
       failureThreshold: parsePositiveInteger("FAILURE_THRESHOLD", process.env.FAILURE_THRESHOLD, 2),
       recoveryThreshold: parsePositiveInteger("RECOVERY_THRESHOLD", process.env.RECOVERY_THRESHOLD, 1),
       expectedStatus: parseExpectedStatus(process.env.EXPECTED_STATUS),
       expectSubstring: process.env.EXPECT_SUBSTRING?.trim() || "",
+      notifyOnRecovery: parseBoolean(process.env.NOTIFY_ON_RECOVERY, true),
+      notifyOnDegraded: parseBoolean(process.env.NOTIFY_ON_DEGRADED, true),
+    },
+    history: {
+      filePath: process.env.UPTIME_HISTORY_FILE?.trim() || "./data/uptime-checks.ndjson",
+      retentionDays: 7,
     },
   };
 }

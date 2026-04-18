@@ -18,6 +18,7 @@ async function runCheck(check) {
         checkedAt,
         latencyMs,
         url: check.url,
+        statusCode: response.status,
         summary: `Unexpected HTTP ${response.status}; expected ${check.expectedStatus}`,
       };
     }
@@ -31,9 +32,22 @@ async function runCheck(check) {
           checkedAt,
           latencyMs,
           url: check.url,
+          statusCode: response.status,
           summary: `Response did not contain "${check.expectSubstring}"`,
         };
       }
+    }
+
+    if (check.degradedTimeoutMs > 0 && latencyMs >= check.degradedTimeoutMs) {
+      return {
+        state: "degraded",
+        checkedAt,
+        latencyMs,
+        url: check.url,
+        degradedTimeoutMs: check.degradedTimeoutMs,
+        statusCode: response.status,
+        summary: `Slow response (${latencyMs}ms >= ${check.degradedTimeoutMs}ms)`,
+      };
     }
 
     return {
@@ -41,6 +55,7 @@ async function runCheck(check) {
       checkedAt,
       latencyMs,
       url: check.url,
+      statusCode: response.status,
       summary: `HTTP ${response.status}`,
     };
   } catch (error) {
@@ -53,6 +68,7 @@ async function runCheck(check) {
       checkedAt,
       latencyMs,
       url: check.url,
+      statusCode: null,
       timeoutMs: isTimeout ? check.timeoutMs : undefined,
       summary: error?.name === "TimeoutError"
         ? `Timed out after ${check.timeoutMs}ms`
@@ -72,7 +88,27 @@ export function startMonitor(appName, check, notifier) {
   };
 
   function thresholdFor(nextState) {
-    return nextState === "down" ? check.failureThreshold : check.recoveryThreshold;
+    if (nextState === "down") {
+      return check.failureThreshold;
+    }
+
+    if (nextState === "healthy") {
+      return check.recoveryThreshold;
+    }
+
+    return 1;
+  }
+
+  function shouldNotify(nextState) {
+    if (nextState === "healthy") {
+      return check.notifyOnRecovery;
+    }
+
+    if (nextState === "degraded") {
+      return check.notifyOnDegraded;
+    }
+
+    return true;
   }
 
   async function tick() {
@@ -85,6 +121,10 @@ export function startMonitor(appName, check, notifier) {
 
     try {
       const result = await runCheck(check);
+      await notifier.recordHistory({
+        appName,
+        ...result,
+      });
 
       if (state.lastObservedState === result.state) {
         state.streak += 1;
@@ -97,16 +137,13 @@ export function startMonitor(appName, check, notifier) {
 
       if (state.currentState === "unknown" && state.streak >= threshold) {
         state.currentState = result.state;
-        if (result.state === "down") {
+        if (shouldNotify(result.state)) {
           await notifier.sendAlert({
             appName,
             nextState: result.state,
-            result: {
-              ...result,
-              attempts: state.streak,
-            },
+            result: enrichAlertResult(result, state.streak),
           });
-          log("Initial down alert sent", {
+          log("Initial state alert sent", {
             appName,
             state: result.state,
             summary: result.summary,
@@ -120,16 +157,13 @@ export function startMonitor(appName, check, notifier) {
         }
       } else if (state.currentState !== result.state && state.streak >= threshold) {
         state.currentState = result.state;
-        await notifier.sendAlert({
-          appName,
-          nextState: result.state,
-          result: result.state === "down"
-            ? {
-                ...result,
-                attempts: state.streak,
-              }
-            : result,
-        });
+        if (shouldNotify(result.state)) {
+          await notifier.sendAlert({
+            appName,
+            nextState: result.state,
+            result: enrichAlertResult(result, state.streak),
+          });
+        }
         log("Health state changed", {
           appName,
           state: result.state,
@@ -152,7 +186,17 @@ export function startMonitor(appName, check, notifier) {
     appName,
     url: check.url,
     intervalMs: check.intervalMs,
+    degradedTimeoutMs: check.degradedTimeoutMs,
   });
 
   void tick();
+}
+
+function enrichAlertResult(result, attempts) {
+  return result.state === "down"
+    ? {
+        ...result,
+        attempts,
+      }
+    : result;
 }

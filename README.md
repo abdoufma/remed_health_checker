@@ -6,8 +6,9 @@ Simple webhook-based uptime alerts for one on-prem server. Poll a local health e
 
 - Uses a single Discord incoming webhook for message delivery.
 - Polls one local health endpoint from the same machine.
-- Sends alerts only when the server changes state between `DOWN` and `RECOVERED`.
+- Tracks `DOWN`, `DEGRADED`, and `RECOVERED` states.
 - Mentions one Discord role on `DOWN` alerts.
+- Stores every check result locally for the last 7 days.
 - Runs on plain Node.js 22 with no runtime dependencies.
 
 ## Configuration
@@ -24,9 +25,14 @@ Environment variables:
 - `EXPECTED_STATUS`: expected HTTP status code. Defaults to `200`.
 - `EXPECT_SUBSTRING`: optional substring that must be present in the response body.
 - `CHECK_INTERVAL_MS`: poll interval. Defaults to `30000`.
-- `REQUEST_TIMEOUT_MS`: request timeout. Defaults to `5000`.
+- `REQUEST_TIMEOUT`: request timeout in milliseconds. Defaults to `30000`.
+- `DEGRADED_TIMEOUT`: latency threshold for `DEGRADED` in milliseconds. Defaults to `10000`.
 - `FAILURE_THRESHOLD`: consecutive failed checks before sending `DOWN`. Defaults to `2`.
 - `RECOVERY_THRESHOLD`: consecutive healthy checks before sending `RECOVERED`. Defaults to `1`.
+- `NOTIFY_ON_RECOVERY`: when `false`, suppress `RECOVERED` messages. Defaults to `true`.
+- `NOTIFY_ON_DEGRADED`: when `false`, suppress `DEGRADED` messages. Defaults to `true`.
+- `UPTIME_HISTORY_FILE`: optional path for the rolling 7-day history file. Defaults to `./data/uptime-checks.ndjson`.
+- `REQUEST_TIMEOUT_MS` and `DEGRADED_TIMEOUT_MS` are still accepted as backward-compatible aliases.
 
 ## Running locally
 
@@ -49,6 +55,22 @@ npm start
 ```
 
 The sample server in `test_server.ts` exposes `http://127.0.0.1:3000/health`.
+
+## History
+
+Every check is appended as newline-delimited JSON to `./data/uptime-checks.ndjson` by default. Entries older than 7 days are pruned automatically.
+
+To inspect it in a readable format:
+
+```bash
+npm run history
+```
+
+To show a different number of recent entries:
+
+```bash
+npm run history -- 50
+```
 
 ## Validate config
 
