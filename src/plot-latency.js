@@ -266,7 +266,15 @@ function convertSvgToPng(svgPath, pngPath) {
 }
 
 function commandExists(command) {
-  const result = spawnSync("sh", ["-lc", `command -v ${command}`], { stdio: "ignore" });
+  const lookup = process.platform === "win32"
+    ? { tool: "where", args: [command] }
+    : { tool: "command", args: ["-v", command] };
+
+  const result = spawnSync(lookup.tool, lookup.args, {
+    stdio: "ignore",
+    shell: process.platform !== "win32",
+  });
+
   return result.status === 0;
 }
 

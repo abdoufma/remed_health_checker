@@ -90,6 +90,8 @@ If you omit arguments, the script defaults to `data/uptime-checks.ndjson` and to
 
 The script always writes an SVG and will also write a PNG when `rsvg-convert` or `magick` is available locally.
 
+On Windows, `magick` from ImageMagick is the most likely PNG converter to be available.
+
 ## PM2
 
 ```bash
