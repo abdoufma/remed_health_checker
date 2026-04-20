@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
+    "plot": "node src/plot-latency.js",
     "validate:config": "node src/validate-config.js",
     "history": "node src/show-history.js",
     "test:server": "bun test_server.ts"

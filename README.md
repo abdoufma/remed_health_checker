@@ -78,6 +78,18 @@ npm run history -- 50
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/WEBHOOK_ID/WEBHOOK_TOKEN npm run validate:config
 ```
 
+## Plot
+
+Generate a latency plot from an NDJSON history file:
+
+```bash
+npm run plot -- data/chu_bm_uptime-checks.ndjson 2026-04-19
+```
+
+If you omit arguments, the script defaults to `data/uptime-checks.ndjson` and today in `Africa/Algiers`.
+
+The script always writes an SVG and will also write a PNG when `rsvg-convert` or `magick` is available locally.
+
 ## PM2
 
 ```bash
